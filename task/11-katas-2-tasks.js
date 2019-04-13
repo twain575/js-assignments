@@ -34,7 +34,22 @@
  *
  */
 function parseBankAccount(bankAccount) {
-    throw new Error('Not implemented');
+    const figures = {
+        ' _ | ||_|' : 0,
+        '     |  |' : 1,
+        ' _  _||_ ' : 2,
+        ' _  _| _|' : 3,
+        '   |_|  |' : 4,
+        ' _ |_  _|' : 5,
+        ' _ |_ |_|' : 6,
+        ' _   |  |' : 7,
+        ' _ |_||_|' : 8,
+        ' _ |_| _|' : 9
+    }
+    
+    const arr = bankAccount.split('\n').slice(0, 3).map(x => x.match(/.{3}/g))
+      
+    return parseInt(arr[0].map((_, index) => figures[arr.map(row => row[index]).join('')]).join(''))
 }
 
 
@@ -63,7 +78,19 @@ function parseBankAccount(bankAccount) {
  *                                                                                                'characters.'
  */
 function* wrapText(text, columns) {
-    throw new Error('Not implemented');
+    while(text.length){
+        let value = columns;
+        
+        if(text.length > value){
+            while(text[value] !== ' '){
+                value -= 1;
+            }
+        }
+          
+        yield text.slice(0, value);
+        value += 1;
+        text = text.slice(value);        
+    }
 }
 
 
@@ -100,7 +127,87 @@ const PokerRank = {
 }
 
 function getPokerHandRank(hand) {
-    throw new Error('Not implemented');
+    const cards = {
+        'A': 1,
+        '2': 2,
+        '3': 3,
+        '4': 4,
+        '5': 5,
+        '6': 6,
+        '7': 7,
+        '8': 8,
+        '9': 9,
+        '10': 10,
+        'J': 11,
+        'Q': 12,
+        'K': 13
+    }
+
+    const suits = hand.map(function (card) {
+        return card[card.length - 1];
+    });
+
+    const ranks = hand.map(function (card) {
+        let str = card.substring(0, card.length - 1);
+        return cards[str];
+    });
+
+    const ofKind = nOfKind();
+
+    if(isFlush() && isStraight())return PokerRank.StraightFlush;
+    if(isFlush()) return PokerRank.Flush;
+    if(isStraight()) return PokerRank.Straight;
+    if(ofKind.includes(4)) return PokerRank.FourOfKind;
+    if(ofKind.includes(3) && ofKind.includes(2)) return PokerRank.FullHouse;
+    if(ofKind.includes(3)) return PokerRank.ThreeOfKind;
+    if(ofKind.indexOf(2) !== ofKind.lastIndexOf(2)) return PokerRank.TwoPairs;
+    if(ofKind.includes(2)) return PokerRank.OnePair;
+
+    return PokerRank.HighCard;   
+
+    function isFlush() {
+        let suit = suits[0];
+
+        return suits.every(function (item) {
+            return (item === suit);
+        });
+    }
+
+    function isStraight() {
+        ranks.sort((a, b) => a - b);
+
+        if(ranks[0] === 1 && ranks[4] === 13) {
+            ranks.shift();
+            ranks.push(14);
+        }
+
+        for (let i = 1; i < ranks.length; i++) {
+            if (ranks[i] != ranks[i - 1] + 1) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function nOfKind() {
+        const ofKind = [];
+        const checkedItems = [];
+
+        for(let i = 0; i < ranks.length; i++) {
+            let c = ranks.reduce(function(count, item) {
+                if(checkedItems.includes(ranks[i])) return count;
+
+                if(ranks[i] == item) return ++count;
+                else return count;
+            }, 0);
+
+            ofKind.push(c);
+            checkedItems.push(ranks[i]);
+        }
+
+        return ofKind;
+    }
 }
 
 
@@ -135,9 +242,96 @@ function getPokerHandRank(hand) {
  *    '+-------------+\n'
  */
 function* getFigureRectangles(figure) {
-   throw new Error('Not implemented');
+    const Arrtmp = figure.split('\n');
+    const pluses = [];
+    const horizontalLines = [];
+    const rectangles = [];
+
+    for (let i = 0; i < Arrtmp.length; i++) {
+        for (let j = 0; j < Arrtmp[0].length; j++) {
+            if (Arrtmp[i][j] === '+') {
+                pluses.push({x: j, y: i});
+            }
+        }
+    }
+
+    for (let i = 0; i < pluses.length; i++) {
+        for (let j = i + 1; j < pluses.length; j++) {
+            if (pluses[i].y === pluses[j].y) {
+                if (checkHorizontalLine(Arrtmp, pluses[i], pluses[j]))
+                    horizontalLines.push([pluses[i], pluses[j]]);
+            }
+        }
+    }
+
+    for (let i = 0; i < horizontalLines.length; i++) {
+        for (let j = i + 1; j < horizontalLines.length; j++) {
+            if (checkRectangle(Arrtmp, horizontalLines[i], horizontalLines[j])) {
+                rectangles.push([horizontalLines[i], horizontalLines[j]]);
+            }
+        }
+    }
+
+    for (let i = 0; i < rectangles.length; i++) {
+        let rectangle = drawRectangle(rectangles[i]);
+
+        yield rectangle;
+    }
 }
 
+function checkHorizontalLine(Arrtmp, s, f) {
+    for (let i = s.x; i <= f.y; i++) {
+        if (Arrtmp[s.y][i] !== '-' && Arrtmp[s.y][i] !== '+') return false;
+    }
+    return true;
+}
+
+function checkRectangle(Arrtmp, top, bottom) {
+    if (top[0].x !== bottom[0].x) return false;
+
+    if (top[1].x !== bottom[1].x) return false;
+
+    const leftX = top[0].x;
+    const rightX = top[1].x;
+    const topY = top[0].y;
+    const bottomY = bottom[0].y;
+
+    for (let j = leftX + 1; j < rightX; j++)
+        if (Arrtmp[topY][j] === '+' && Arrtmp[bottomY][j] === '+') {
+            let hasWhiteSpace = false;
+
+            for (let i = topY + 1; i < bottomY; i++)
+                if (Arrtmp[i][j] === ' ') hasWhiteSpace = true;
+
+
+            if (!hasWhiteSpace) return false;
+        }
+
+    for (let i = topY + 1; i < bottomY; i++) {
+        if (Arrtmp[i][leftX] !== '|' && Arrtmp[i][leftX] !== '+') return false;
+
+        if (Arrtmp[i][rightX] !== '|' && Arrtmp[i][rightX] !== '+') return false;
+
+        for (let j = leftX + 1; j < rightX; j++) {
+            if (Arrtmp[i][j] !== ' ') return false;
+        }
+    }
+
+    return true;
+}
+
+function drawRectangle(item) {
+    let width = item[0][1].x - item[0][0].x + 1;
+    let height = item[1][0].y - item[0][0].y + 1;
+    let result = '';
+    let topLine = '+' + ('-').repeat(width - 2) + '+' + '\n';
+
+    result += topLine;
+    result += ( '|' + (' ').repeat(width - 2) + '|' + '\n' ).repeat(height - 2);
+    result += topLine;
+
+    return result;
+}
 
 module.exports = {
     parseBankAccount : parseBankAccount,

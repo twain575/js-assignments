@@ -17,8 +17,24 @@
  *  ]
  */
 function createCompassPoints() {
-    throw new Error('Not implemented');
-    var sides = ['N','E','S','W'];  // use array of cardinal directions only!
+    const sides = [ 'N', 'NbE', 'NNE', 'NEbN', 'NE', 'NEbE', 'ENE', 
+                    'EbN', 'E', 'EbS', 'ESE', 'SEbE', 'SE', 'SEbS', 
+                    'SSE', 'SbE', 'S', 'SbW', 'SSW', 'SWbS', 'SW', 
+                    'SWbW', 'WSW', 'WbS', 'W', 'WbN', 'WNW', 'NWbW', 
+                    'NW', 'NWbN', 'NNW', 'NbW' ];
+    const res = [];
+    let deg = 0.00;
+
+    for(let i = 0; i < sides.length; i++) {
+        res.push({
+            abbreviation: sides[i],
+            azimuth: deg
+        });
+
+        deg += 11.25;
+    }
+
+    return res;
 }
 
 
@@ -55,8 +71,45 @@ function createCompassPoints() {
  *
  *   'nothing to do' => 'nothing to do'
  */
-function* expandBraces(str) {
-    throw new Error('Not implemented');
+function expandBraces(str) {
+    const output = []; 
+    const input = [ str ];
+  
+    while(input.length > 0){
+        const e = input.shift().split('');
+        const st = e.indexOf('{');
+
+        if(st > -1){
+            let count = 0; 
+
+            for(let i = st; i < e.length; i++){
+                if(e[i] === '{') count++;
+
+                if(e[i] === '}') count--;
+
+                if(count > 1 && e[i] === ',') e[i] = '\t';
+
+                if(count === 0){
+                    const tmp = e.slice(st + 1, i).join('').split(',');
+
+                    for(var it of tmp){
+                        if(!it.includes('{') && !it.includes('}')) {
+                            input.push(e.join('').replace(e.slice(st, i + 1).join(''), it));
+                        } else {
+                            input.push(e.join('').replace(e.slice(st, i + 1).join(''), it.replace(/\t/g, ',')));
+                        }
+                    }
+                    
+                    break;
+                }
+            }
+        }
+        else{
+            output.push(e.join(''));
+        }
+    }
+
+    return output;
 }
 
 
@@ -88,7 +141,28 @@ function* expandBraces(str) {
  *
  */
 function getZigZagMatrix(n) {
-    throw new Error('Not implemented');
+    const arr = Array.from({ length: n });
+
+    for (let i = 0; i < n; i++) {
+        arr[i] = Array.from({ length: n });
+    }
+
+    let i = 1;
+    let j = 1;
+
+    for (let e = 0; e < n * n; e++) {
+        arr[i - 1][j - 1] = e;
+        if ((i + j) % 2 == 0) {
+            if (j < n) j++;
+            else i += 2;
+            if (i > 1) i--;
+        } else {
+            if (i < n) i++;
+            else j += 2;
+            if (j > 1) j--;
+        }
+    }
+    return arr;
 }
 
 
@@ -113,7 +187,33 @@ function getZigZagMatrix(n) {
  *
  */
 function canDominoesMakeRow(dominoes) {
-    throw new Error('Not implemented');
+    const stack = [];
+    stack.push(dominoes.pop());
+
+    let checkForLooping;
+
+    while (dominoes.length) {
+        dominoes.forEach((domino, index) => {
+            if (stack[0][0] === domino[0]) {
+                stack.unshift(domino.reverse());
+                dominoes.splice(index, 1);
+            } else if (stack[0][0] === domino[1]) {
+                stack.unshift(domino);
+                dominoes.splice(index, 1);
+            } else if (stack[stack.length - 1][1] === domino[0]) {
+                stack.push(domino);
+                dominoes.splice(index, 1);
+            } else if (stack[stack.length - 1][1] === domino[1]) {
+                stack.push(domino.reverse());
+                dominoes.splice(index, 1);
+            }
+        });
+
+        if (checkForLooping === dominoes.length) break;
+
+        checkForLooping = dominoes.length;
+    }
+    return !!(!dominoes.length);
 }
 
 
@@ -137,7 +237,22 @@ function canDominoesMakeRow(dominoes) {
  * [ 1, 2, 4, 5]          => '1,2,4,5'
  */
 function extractRanges(nums) {
-    throw new Error('Not implemented');
+    const arr = [];
+    for (let i = 0; i < nums.length; i++) {
+        const num1 = nums[i];
+        let num2 = num1;
+
+        while (i < nums.length && nums[i + 1] === num2 + 1) {
+            i++;
+            num2++;
+        }
+
+        if (num1 === num2) arr.push(num1);
+        else if (num1 + 1 === num2) arr.push(num1, num2);
+        else arr.push(num1+"-"+num2);
+    }
+    
+    return arr.join(",");
 }
 
 module.exports = {

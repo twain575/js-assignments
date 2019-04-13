@@ -28,7 +28,37 @@
  *   'NULL'      => false 
  */
 function findStringInSnakingPuzzle(puzzle, searchStr) {
-    throw new Error('Not implemented');
+    function foo(x, y, l) { 
+        if (puzzle[x][y] != searchStr[l]) return false;
+        if (l == searchStr.length - 1) return true;
+
+        used[x][y] = true;
+
+        for(let i = 0; i < 4; i++) {
+            const _x = x + dx[i];
+            const _y = y + dy[i];
+
+            if (!used[_x] || used[_x][_y]) continue;
+            if (foo(_x, _y, l + 1)) return true;
+        }
+
+        return used[x][y] = false; 
+    }
+        
+    const n = puzzle.length;
+    const m = puzzle[0].length;
+    const used = Array.from({length: n}, () => new Array(m).fill(false));
+
+    const dx = [-1, 1, 0, 0];
+    const dy = [0, 0, -1, 1];
+
+    for (let x = 0; x < n; x++) {
+        for (let y = 0; y < m; y++) {
+            if (foo(x, y, 0)) return true;
+        }
+    }
+
+    return false;
 }
 
 
@@ -45,7 +75,20 @@ function findStringInSnakingPuzzle(puzzle, searchStr) {
  *    'abc' => 'abc','acb','bac','bca','cab','cba'
  */
 function* getPermutations(chars) {
-    throw new Error('Not implemented');
+    function *permute(a, n) {
+        if (n <= 1)
+            yield a.slice().join('');
+        else
+            for (let i = 0; i < n; i++) {
+                yield *permute(a, n - 1);
+                const j = n % 2 ? 0 : i;
+                let temp = a[n - 1];
+                a[n - 1] = a[j];
+                a[j] = temp;
+            }
+    }
+
+    yield *permute(chars.split(''), chars.length);
 }
 
 
@@ -65,7 +108,8 @@ function* getPermutations(chars) {
  *    [ 1, 6, 5, 10, 8, 7 ] => 18  (buy at 1,6,5 and sell all at 10)
  */
 function getMostProfitFromStockQuotes(quotes) {
-    throw new Error('Not implemented');
+    const array = quotes.map((currentValue, index) => quotes.slice(index, quotes.length).sort((a, b) => b - a)[0] - currentValue);
+    return array.reduce((accum, value) => accum += value);
 }
 
 
@@ -92,11 +136,29 @@ function UrlShortener() {
 UrlShortener.prototype = {
 
     encode: function(url) {
-        throw new Error('Not implemented');
+        let res = "";
+        for (let i = 0; i < url.length; i += 2) {
+            let tmp1 = url.charCodeAt(i);
+            let tmp2 = url.charCodeAt(i + 1);
+            let code = (tmp1 << 8) |tmp2;
+            res += String.fromCharCode(code);
+        }
+        return res;
     },
-    
+
     decode: function(code) {
-        throw new Error('Not implemented');
+        let res = "";
+        for (let i = 0; i < code.length; i++) {
+            let char = parseInt(code.charCodeAt(i), 10);
+            let tmp1 = char & 255;
+            let tmp2 = (char >> 8) & 255;
+            if (tmp1 === 0) {
+                res += String.fromCharCode(tmp2)
+            } else {
+                res += String.fromCharCode(tmp2) + String.fromCharCode(tmp1);
+            }
+        }
+        return res;
     } 
 }
 
